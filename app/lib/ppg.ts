@@ -1,4 +1,6 @@
 // app/lib/ppg.ts — pure signal helpers (no React, no DOM)
+import type { Valley, HeartRateResult, HRVResult } from '../types';
+
 export const FPS = 30;
 export const MIN_RR_S = 0.4;
 export const MAX_RR_S = 2.0;
@@ -26,14 +28,11 @@ export function isLocalMinimum(
   );
 }
 
-export function detectValleys(
-  signal: number[],
-  fps: number,
-): { index: number; value: number }[] {
+export function detectValleys(signal: number[], fps: number): Valley[] {
   const minDist = Math.floor(fps * 0.4);
   const windowSize = Math.floor(fps * 0.5);
   const norm = normalizeSignal(signal);
-  const valleys: { index: number; value: number }[] = [];
+  const valleys: Valley[] = [];
   for (let i = windowSize; i < norm.length - windowSize; i++) {
     if (isLocalMinimum(norm, i, windowSize)) {
       if (
@@ -48,9 +47,9 @@ export function detectValleys(
 }
 
 export function heartRateFromValleys(
-  valleys: { index: number; value: number }[],
+  valleys: Valley[],
   fps: number,
-): { bpm: number; confidence: number } {
+): HeartRateResult {
   if (valleys.length < 2) return { bpm: 0, confidence: 0 };
   const intervals = valleys
     .slice(1)
@@ -68,9 +67,9 @@ export function heartRateFromValleys(
 }
 
 export function hrvFromValleys(
-  valleys: { index: number; value: number }[],
+  valleys: Valley[],
   fps: number,
-): { sdnn: number; confidence: number } {
+): HRVResult {
   if (valleys.length < 2) return { sdnn: 0, confidence: 0 };
   const intervalsMs = valleys
     .slice(1)
