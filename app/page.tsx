@@ -45,7 +45,7 @@ export default function Home() {
     let cancelled = false;
     async function run() {
       const current = samplesRef.current;
-      if (current.length < SAMPLES_TO_KEEP) return;
+      if (current.length < MIN_SAMPLES_FOR_DETECTION) return;
       const segment = current.slice(-SAMPLES_TO_KEEP);
       try {
         const res = await fetch('/api/infer-quality', {
@@ -58,7 +58,7 @@ export default function Home() {
           setInferenceResult({
             label: data.label ?? null,
             confidence: data.confidence ?? 0,
-            message: data.message,
+            message: data.message ?? data.error ?? undefined,
           });
         }
       } catch {
@@ -349,7 +349,7 @@ export default function Home() {
               </p>
             ) : (
               <p className="text-gray-500">
-                {isRecording && samples.length < SAMPLES_TO_KEEP
+                {isRecording && samples.length < MIN_SAMPLES_FOR_DETECTION
                   ? 'Collecting samples…'
                   : !isRecording
                     ? 'Start recording for quality inference'
