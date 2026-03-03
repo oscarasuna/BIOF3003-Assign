@@ -6,6 +6,8 @@ import {
   heartRateFromValleys,
   hrvFromValleys,
   FPS,
+  SAMPLES_TO_KEEP,
+  MIN_SAMPLES_FOR_DETECTION,
 } from '../lib/ppg';
 import type { Valley, HeartRateResult, HRVResult } from '../types';
 
@@ -18,8 +20,8 @@ export default function usePPGFromSamples(samples: number[]) {
   const [hrv, setHrv] = useState<HRVResult>({ sdnn: 0, confidence: 0 });
 
   useEffect(() => {
-    if (samples.length < 60) return;
-    const toUse = samples.slice(-150);
+    if (samples.length < MIN_SAMPLES_FOR_DETECTION) return;
+    const toUse = samples.slice(-SAMPLES_TO_KEEP);
     const v = detectValleys(toUse, FPS);
     setValleys(v);
     setHeartRate(heartRateFromValleys(v, FPS));

@@ -4,12 +4,13 @@ import SimpleCard from './components/SimpleCard';
 import ChartComponent from './components/ChartComponent';
 import { useState, useEffect, useRef } from 'react';
 import usePPGFromSamples from './hooks/usePPGFromSamples';
-import { computePPGFromRGB } from './lib/ppg';
+import {
+  computePPGFromRGB,
+  SAMPLES_TO_KEEP,
+  MIN_SAMPLES_FOR_DETECTION,
+} from './lib/ppg';
 import type { SignalCombinationMode } from './components/SignalCombinationSelector';
 import SignalCombinationSelector from './components/SignalCombinationSelector';
-
-const SAMPLES_TO_KEEP = 200;
-const SEGMENT_LENGTH = 200;
 
 export default function Home() {
   const { videoRef, canvasRef, isRecording, setIsRecording, error } =
@@ -44,8 +45,8 @@ export default function Home() {
     let cancelled = false;
     async function run() {
       const current = samplesRef.current;
-      if (current.length < SEGMENT_LENGTH) return;
-      const segment = current.slice(-SEGMENT_LENGTH);
+      if (current.length < SAMPLES_TO_KEEP) return;
+      const segment = current.slice(-SAMPLES_TO_KEEP);
       try {
         const res = await fetch('/api/infer-quality', {
           method: 'POST',
@@ -91,12 +92,12 @@ export default function Home() {
   }
 
   async function sendLabeledSegment() {
-    if (samples.length < 50) {
+    if (samples.length < MIN_SAMPLES_FOR_DETECTION) {
       setSegmentStatus('Need more samples (start recording first)');
       return;
     }
     setSegmentStatus(null);
-    const ppgSegment = samples.slice(-SEGMENT_LENGTH);
+    const ppgSegment = samples.slice(-SAMPLES_TO_KEEP);
     try {
       const res = await fetch('/api/save-labeled-segment', {
         method: 'POST',
@@ -119,7 +120,7 @@ export default function Home() {
         sdnn: hrv?.sdnn ?? 0,
         confidence: hrv?.confidence ?? 0,
       },
-      ppgData: samples.slice(-200),
+      ppgData: samples.slice(-SAMPLES_TO_KEEP),
       timestamp: new Date().toISOString(),
     };
     try {
@@ -236,7 +237,10 @@ export default function Home() {
       </div>
 
       <div className="mt-4">
-        <ChartComponent ppgData={samples} valleys={valleys} />
+        <ChartComponent
+          ppgData={samples.slice(-SAMPLES_TO_KEEP)}
+          valleys={valleys}
+        />
         <SignalCombinationSelector
           value={signalCombination}
           onChange={setSignalCombination}
@@ -345,7 +349,7 @@ export default function Home() {
               </p>
             ) : (
               <p className="text-gray-500">
-                {isRecording && samples.length < SEGMENT_LENGTH
+                {isRecording && samples.length < SAMPLES_TO_KEEP
                   ? 'Collecting samples…'
                   : !isRecording
                     ? 'Start recording for quality inference'

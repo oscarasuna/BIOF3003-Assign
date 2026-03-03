@@ -2,6 +2,10 @@
 import type { Valley, HeartRateResult, HRVResult } from '../types';
 
 export const FPS = 30;
+/** 10 seconds at 30 fps. Use consistently for chart, valley detection, save, and inference. */
+export const SAMPLES_TO_KEEP = 300;
+/** Minimum samples before running valley detection (2 seconds). */
+export const MIN_SAMPLES_FOR_DETECTION = 60;
 export const MIN_RR_S = 0.4;
 export const MAX_RR_S = 2.0;
 

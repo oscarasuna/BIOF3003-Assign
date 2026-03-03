@@ -72,7 +72,7 @@ export default function ChartComponent({
   return (
     <div className="bg-white p-4 rounded-lg shadow-md">
       <h2 className="text-lg font-semibold mb-2">PPG Signal</h2>
-      <div className="h-75 min-h-[200px]">
+      <div className="h-[300px] min-h-[200px]">
         {hasData ? (
           <Line data={chartData} options={chartOptions} />
         ) : (
