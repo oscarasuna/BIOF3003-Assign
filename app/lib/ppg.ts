@@ -104,5 +104,9 @@ export function computePPGFromRGB(
 ): number {
   // Default: 2R−G−B. Assignment: add cases for redOnly, greenOnly, 2xG-R-B (Additional Work 3).
   if (mode === 'default') return (2 * rSum - gSum - bSum) / pixelCount;
+  if (mode === 'redOnly') return rSum / pixelCount;
+  if (mode === 'greenOnly') return gSum / pixelCount;
+  if (mode === '2xG-R-B') return (2 * gSum - rSum - bSum) / pixelCount;
+return (2 * rSum - gSum - bSum) / pixelCount; // fallback
   return (2 * rSum - gSum - bSum) / pixelCount; // fallback
 }

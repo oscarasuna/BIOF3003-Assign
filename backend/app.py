@@ -1,6 +1,9 @@
 import json
 import os
 from datetime import datetime
+import base64
+import io
+import joblib
 
 import numpy as np
 from flask import Flask, request, jsonify
@@ -134,3 +137,32 @@ def infer_quality():
         return jsonify({"label": label, "confidence": round(confidence, 2)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/upload-model', methods=['POST'])
+def upload_model():
+    """Receive base64 encoded model and scaler, load them into memory and optionally save to disk."""
+    global QUALITY_MODEL, QUALITY_SCALER
+    try:
+        data = request.get_json()
+        if not data or 'model' not in data or 'scaler' not in data:
+            return jsonify({'success': False, 'error': 'Missing model or scaler'}), 400
+
+        # Decode base64 strings
+        model_bytes = base64.b64decode(data['model'])
+        scaler_bytes = base64.b64decode(data['scaler'])
+
+        # Load model and scaler from bytes
+        QUALITY_MODEL = joblib.load(io.BytesIO(model_bytes))
+        QUALITY_SCALER = joblib.load(io.BytesIO(scaler_bytes))
+
+        # Optionally save to disk for future restarts
+        model_path = os.path.join(os.path.dirname(__file__), "quality_model.joblib")
+        scaler_path = os.path.join(os.path.dirname(__file__), "quality_scaler.joblib")
+        with open(model_path, 'wb') as f:
+            f.write(model_bytes)
+        with open(scaler_path, 'wb') as f:
+            f.write(scaler_bytes)
+
+        return jsonify({'success': True, 'message': 'Model and scaler uploaded and loaded'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

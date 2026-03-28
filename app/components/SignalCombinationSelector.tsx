@@ -1,12 +1,14 @@
 'use client';
 
 /* Assignment: Add at least three more modes (e.g. redOnly, greenOnly, 2xG-R-B) in type and OPTIONS (Additional Work 3). */
-export type SignalCombinationMode = 'default';
+export type SignalCombinationMode = 'default' | 'redOnly' | 'greenOnly' | '2xG-R-B';
 
-const SIGNAL_COMBINATION_OPTIONS: {
-  value: SignalCombinationMode;
-  label: string;
-}[] = [{ value: 'default', label: 'Default (2R−G−B)' }];
+const SIGNAL_COMBINATION_OPTIONS: { value: SignalCombinationMode; label: string }[] = [
+  { value: 'default', label: 'Default (2R-G-B)' },
+  { value: 'redOnly', label: 'Red only' },
+  { value: 'greenOnly', label: 'Green only' },
+  { value: '2xG-R-B', label: '2xG-R-B' },
+];
 
 interface SignalCombinationSelectorProps {
   value: SignalCombinationMode;
