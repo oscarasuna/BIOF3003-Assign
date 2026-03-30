@@ -30,17 +30,17 @@ export default function Home() {
   const [labeledSegments, setLabeledSegments] = useState<{ ppgData: number[]; label: string }[]>([]);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
-
   const [inferenceResult, setInferenceResult] = useState<{
     label: string | null;
     confidence: number;
     message?: string;
-  } | null>(null);  
+  } | null>(null);
 
   const samplesRef = useRef<number[]>([]);
   useEffect(() => {
     samplesRef.current = samples;
   }, [samples]);
+
   const modelInputRef = useRef<HTMLInputElement>(null);
   const scalerInputRef = useRef<HTMLInputElement>(null);
 
@@ -242,176 +242,259 @@ export default function Home() {
   }
 
   return (
-    <main className="p-8">
-      <h1 className="text-xl font-bold mb-4">Canvas sampling and POST</h1>
-
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold mb-2">Camera</h2>
-        <div className="w-96 max-w-full border border-gray-400 bg-black min-h-[240px] flex items-center justify-center overflow-hidden rounded">
-          <video ref={videoRef} autoPlay muted playsInline className="hidden" />
-          {isRecording ? (
-            <canvas
-              ref={canvasRef}
-              className="w-full h-full min-h-[240px] object-contain"
-            />
-          ) : (
-            <span className="text-gray-500 text-sm">
-              Start recording to see camera
-            </span>
-          )}
-        </div>
-        <div className="mt-2">
-          <button
-            onClick={() => setIsRecording((r) => !r)}
-            className="px-4 py-2 bg-green-500 text-white rounded"
-          >
-            {isRecording ? 'Stop recording' : 'Start recording'}
-          </button>
-          {error && <p className="text-red-600 mt-2">{error}</p>}
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <ChartComponent
-          ppgData={samples.slice(-SAMPLES_TO_KEEP)}
-          valleys={valleys}
-        />
-        <SignalCombinationSelector
-          value={signalCombination}
-          onChange={setSignalCombination}
-        />
-        <div className="mt-2 flex flex-wrap gap-4">
-          <SimpleCard
-            title="Heart rate"
-            value={heartRate.bpm > 0 ? `${heartRate.bpm} bpm` : '--'}
-          />
-          <SimpleCard
-            title="Confidence"
-            value={
-              heartRate.confidence > 0
-                ? `${heartRate.confidence.toFixed(0)}%`
-                : '--'
-            }
-          />
-          <SimpleCard
-            title="HRV"
-            value={hrv.sdnn > 0 ? `${hrv.sdnn} ms` : '--'}
-          />
-        </div>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-4">
-        <SimpleCard
-          title="Current PPG"
-          value={samples[samples.length - 1]?.toFixed(1) ?? '-'}
-        />
-        <SimpleCard
-          title="Last 20"
-          value={
-            samples
-              .slice(-20)
-              .map((s) => s.toFixed(0))
-              .join(', ') || '-'
-          }
-        />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-4">
-          <button
-            onClick={checkBackend}
-            className="px-4 py-2 bg-gray-500 text-white rounded"
-          >
-            Check backend
-          </button>
-          <button
-            onClick={saveRecord}
-            className="px-4 py-2 bg-green-500 text-white rounded"
-          >
-            Save record
-          </button>
-        </div>
-        {backendStatus && <p className="mt-2 text-sm">{backendStatus}</p>}
-        {saveStatus && <p className="mt-2 text-sm">{saveStatus}</p>}
-
-        <div className="mt-4 border-t pt-4">
-          <h3 className="font-medium mb-2">Collect labeled data (for ML)</h3>
-          <p className="text-sm text-gray-600 mb-2">
-            Choose a label, watch the signal until it matches, then click Send to
-            save this segment.
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+            PPG Signal Quality Analyzer
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Real‑time photoplethysmography (PPG) from webcam with machine learning quality assessment
           </p>
-          <div className="flex items-center gap-4 mb-2">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="segmentLabel"
-                checked={segmentLabel === 'good'}
-                onChange={() => setSegmentLabel('good')}
-              />
-              Good
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="segmentLabel"
-                checked={segmentLabel === 'bad'}
-                onChange={() => setSegmentLabel('bad')}
-              />
-              Bad
-            </label>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={sendLabeledSegment}
-              className="px-4 py-2 bg-amber-500 text-white rounded"
-            >
-              Send labeled segment
-            </button>
-            <button
-              onClick={downloadLabeledJson}
-              className="px-4 py-2 bg-amber-500 text-white rounded"
-              disabled={labeledSegments.length === 0}
-            >
-              Download labeled_records.json
-            </button>
-          </div>
-          {segmentStatus && <p className="mt-2 text-sm">{segmentStatus}</p>}
         </div>
 
-        {/* Assignment: Add Upload model and scaler UI here (Additional Work 2). */}
-        <input type="file" ref={modelInputRef} accept=".joblib" />
-        <input type="file" ref={scalerInputRef} accept=".joblib" />
-        <button onClick={() => handleUploadModel(modelInputRef.current?.files?.[0] ?? null, scalerInputRef.current?.files?.[0] ?? null)} className="px-4 py-2 bg-blue-500 text-white rounded">
-          Upload model and scaler
-        </button>
-        {uploadStatus && <p className="mt-2 text-sm">{uploadStatus}</p>}
+        {/* Two‑column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left column */}
+          <div className="space-y-6">
+            {/* Camera Card */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">Camera Feed</h2>
+              </div>
+              <div className="p-4">
+                <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+                  <video ref={videoRef} autoPlay muted playsInline className="hidden" />
+                  {isRecording ? (
+                    <canvas ref={canvasRef} className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-gray-400 text-sm">
+                      Start recording to see camera
+                    </span>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => setIsRecording((r) => !r)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      isRecording
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-green-500 hover:bg-green-600 text-white'
+                    }`}
+                  >
+                    {isRecording ? 'Stop Recording' : 'Start Recording'}
+                  </button>
+                  {error && <p className="text-red-600 mt-2 text-sm">{error}</p>}
+                </div>
+              </div>
+            </div>
 
-        <div className="mt-4 border-t pt-4">
-          <h3 className="font-medium mb-2">Signal quality (ML inference)</h3>
-          <p className="text-sm text-gray-600 mb-2">
-            Quality updates continuously while recording (when enough samples are
-            available).
-          </p>
-          <div className="mt-2 text-sm">
-            {inferenceResult?.message && (
-              <p className="text-gray-600">{inferenceResult.message}</p>
-            )}
-            {inferenceResult?.label ? (
-              <p>
-                Predicted: <strong>{inferenceResult.label}</strong>
-                {inferenceResult.confidence > 0 &&
-                  ` (${(inferenceResult.confidence * 100).toFixed(0)}% confidence)`}
+            {/* Chart Card */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">PPG Signal</h2>
+              </div>
+              <div className="p-4">
+                <ChartComponent
+                  ppgData={samples.slice(-SAMPLES_TO_KEEP)}
+                  valleys={valleys}
+                />
+                <div className="mt-4">
+                  <SignalCombinationSelector
+                    value={signalCombination}
+                    onChange={setSignalCombination}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="space-y-6">
+            {/* Metrics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <SimpleCard
+                title="Heart Rate"
+                value={heartRate.bpm > 0 ? `${heartRate.bpm} bpm` : '--'}
+              />
+              <SimpleCard
+                title="Confidence"
+                value={
+                  heartRate.confidence > 0
+                    ? `${heartRate.confidence.toFixed(0)}%`
+                    : '--'
+                }
+              />
+              <SimpleCard
+                title="HRV (SDNN)"
+                value={hrv.sdnn > 0 ? `${hrv.sdnn} ms` : '--'}
+              />
+            </div>
+
+            {/* Current Values Card */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-2">Live Values</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Current PPG</p>
+                  <p className="text-2xl font-mono font-bold text-gray-800">
+                    {samples[samples.length - 1]?.toFixed(1) ?? '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Last 20 samples</p>
+                  <p className="text-sm font-mono text-gray-600 truncate">
+                    {samples.slice(-20).map((s) => s.toFixed(0)).join(', ') || '-'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Card */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">Actions</h3>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={checkBackend}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                >
+                  Check Backend
+                </button>
+                <button
+                  onClick={saveRecord}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Save Record
+                </button>
+              </div>
+              {backendStatus && <p className="mt-2 text-sm text-gray-600">{backendStatus}</p>}
+              {saveStatus && <p className="mt-2 text-sm text-gray-600">{saveStatus}</p>}
+            </div>
+
+            {/* Labeled Data Collection Card */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">Collect Labeled Data</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Label the current signal segment to build a training dataset.
               </p>
-            ) : (
-              <p className="text-gray-500">
-                {isRecording && samples.length < MIN_SAMPLES_FOR_DETECTION
-                  ? 'Collecting samples…'
-                  : !isRecording
-                    ? 'Start recording for quality inference'
-                    : '--'}
+              <div className="flex items-center gap-4 mb-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="segmentLabel"
+                    checked={segmentLabel === 'good'}
+                    onChange={() => setSegmentLabel('good')}
+                    className="text-blue-600"
+                  />
+                  <span>Good</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="segmentLabel"
+                    checked={segmentLabel === 'bad'}
+                    onChange={() => setSegmentLabel('bad')}
+                    className="text-blue-600"
+                  />
+                  <span>Bad</span>
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={sendLabeledSegment}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
+                >
+                  Send Labeled Segment
+                </button>
+                <button
+                  onClick={downloadLabeledJson}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  disabled={labeledSegments.length === 0}
+                >
+                  Download JSON
+                </button>
+              </div>
+              {segmentStatus && <p className="mt-2 text-sm text-gray-600">{segmentStatus}</p>}
+            </div>
+
+            {/* Model Upload Card */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">Upload ML Model</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Upload a trained quality model (.joblib) and scaler to use for inference.
               </p>
-            )}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Model file</label>
+                  <input
+                    type="file"
+                    ref={modelInputRef}
+                    accept=".joblib"
+                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Scaler file</label>
+                  <input
+                    type="file"
+                    ref={scalerInputRef}
+                    accept=".joblib"
+                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                <button
+                  onClick={() => handleUploadModel(modelInputRef.current?.files?.[0] ?? null, scalerInputRef.current?.files?.[0] ?? null)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  Upload Model and Scaler
+                </button>
+                {uploadStatus && <p className="text-sm text-gray-600">{uploadStatus}</p>}
+              </div>
+            </div>
+
+            {/* Inference Result Card */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">Signal Quality (ML)</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Automatic quality assessment using the uploaded model.
+              </p>
+              <div className="mt-2 text-sm">
+                {inferenceResult?.message && (
+                  <p className="text-gray-600 bg-yellow-50 p-2 rounded">{inferenceResult.message}</p>
+                )}
+                {inferenceResult?.label ? (
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium">Prediction:</span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        inferenceResult.label === 'good'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {inferenceResult.label}
+                    </span>
+                    {inferenceResult.confidence > 0 && (
+                      <span className="text-gray-600">
+                        ({(inferenceResult.confidence * 100).toFixed(0)}% confidence)
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">
+                    {isRecording && samples.length < MIN_SAMPLES_FOR_DETECTION
+                      ? 'Collecting samples…'
+                      : !isRecording
+                        ? 'Start recording for quality inference'
+                        : '--'}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </main>
-
-
+      </div>
+    </main>
   );
 }

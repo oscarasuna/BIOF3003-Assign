@@ -1,7 +1,7 @@
 import json
 import os
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
@@ -21,21 +21,48 @@ def load_labeled():
 
 
 def main():
+    """
+    Train a Random Forest classifier to distinguish 'good' from 'bad' PPG segments.
+
+    Why Random Forest?
+    - Handles non-linear relationships that logistic regression might miss.
+    - Robust to outliers and does not require feature scaling (though we keep scaling for consistency).
+    - Provides feature importance, which can help interpret which PPG features matter most.
+    - Generally performs well on tabular data with limited sample sizes.
+    """
     records = load_labeled()
     if len(records) < 4:
         print("Need at least 4 labeled segments (e.g. 2 good, 2 bad).")
         return
+
+    # Extract 11 features per segment
     X = np.array([extract_ppg_features(r["ppgData"]) for r in records])
     y = np.array([1 if r["label"] == "good" else 0 for r in records])
+
+    # Split data (80% train, 20% test)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
+
+    # Scale features (though Random Forest is scale‑invariant, we keep scaler for potential future use)
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
-    model = LogisticRegression(max_iter=500)
+
+    # Train Random Forest
+    model = RandomForestClassifier(
+        n_estimators=100,      
+        max_depth=None,        
+        min_samples_split=2,   
+        random_state=42        
+    )
     model.fit(X_train_scaled, y_train)
-    score = model.score(scaler.transform(X_test), y_test)
+
+    # Evaluate on test set
+    X_test_scaled = scaler.transform(X_test)
+    score = model.score(X_test_scaled, y_test)
     print(f"Test accuracy: {score:.2f}")
+
+    # Save model and scaler
     try:
         import joblib
         joblib.dump(model, MODEL_FILE)
