@@ -155,16 +155,16 @@ def upload_model():
         QUALITY_MODEL = joblib.load(io.BytesIO(model_bytes))
         QUALITY_SCALER = joblib.load(io.BytesIO(scaler_bytes))
 
-        # Optionally save to disk for future restarts
-        # model_path = os.path.join(os.path.dirname(__file__), "quality_model.joblib")
-        # scaler_path = os.path.join(os.path.dirname(__file__), "quality_scaler.joblib")
-        model_path = "/tmp/quality_model.joblib"
-        scaler_path = "/tmp/quality_scaler.joblib"
-        
-        with open(model_path, 'wb') as f:
-            f.write(model_bytes)
-        with open(scaler_path, 'wb') as f:
-            f.write(scaler_bytes)
+        # # Optionally save to disk for future restarts
+        # # model_path = os.path.join(os.path.dirname(__file__), "quality_model.joblib")
+        # # scaler_path = os.path.join(os.path.dirname(__file__), "quality_scaler.joblib")
+        # model_path = "/tmp/quality_model.joblib"
+        # scaler_path = "/tmp/quality_scaler.joblib"
+
+        # with open(model_path, 'wb') as f:
+        #     f.write(model_bytes)
+        # with open(scaler_path, 'wb') as f:
+        #     f.write(scaler_bytes)
 
         return jsonify({'success': True, 'message': 'Model and scaler uploaded and loaded'})
     except Exception as e:

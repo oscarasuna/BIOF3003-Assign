@@ -47,3 +47,4 @@ backend/__pycache__/
 backend/*.joblib
 backend/records.json
 backend/labeled_records.json
+.env*.local
